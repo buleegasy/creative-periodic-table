@@ -484,20 +484,21 @@
     </div>
 
     <!-- 顶部标题 -->
-    <div class="absolute top-4 left-4 md:top-8 md:left-8 z-10 pointer-events-none">
-        <h1 class="text-lg md:text-2xl font-semibold tracking-[0.2em] text-white/90">元素周期表</h1>
+    <div class="absolute top-[max(1.5rem,env(safe-area-inset-top))] left-4 md:top-8 md:left-8 z-10 pointer-events-none">
+        <h1 class="text-xl md:text-2xl font-semibold tracking-[0.2em] text-white/90 drop-shadow-md">元素周期表</h1>
         <div class="flex items-center gap-2 mt-1 md:mt-2">
             <span class="w-1.5 h-1.5 rounded-full bg-cyan-500 hidden md:block"></span>
-            <p class="text-[8px] md:text-[10px] text-white/50 tracking-[0.1em] md:tracking-[0.2em] font-mono uppercase">
+            <p
+                class="text-[9px] md:text-[10px] text-white/70 tracking-[0.1em] md:tracking-[0.2em] font-mono uppercase drop-shadow-md">
                 Creative Periodic Table</p>
         </div>
     </div>
 
     <!-- 阅读指南按钮 -->
     <button id="btn-open-guide"
-        class="absolute top-4 right-4 md:top-8 md:right-8 z-30 pointer-events-auto px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-white/10 bg-[#111827]/80 backdrop-blur-md text-[10px] md:text-xs tracking-widest text-white/70 hover:bg-white/5 hover:text-white cursor-pointer transition-all active:scale-95 flex items-center gap-1 md:gap-2 font-mono">
-        <span class="hidden md:inline">[</span> ℹ<span class="hidden md:inline">阅 读 指 南</span> <span
-            class="hidden md:inline">]</span>
+        class="absolute top-[max(1.5rem,env(safe-area-inset-top))] right-4 md:top-8 md:right-8 z-30 pointer-events-auto px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-white/20 bg-[#111827]/80 backdrop-blur-md text-[10px] md:text-xs tracking-widest text-white/90 hover:bg-white/10 hover:text-white cursor-pointer transition-all active:scale-95 flex items-center gap-1 md:gap-2 font-mono shadow-lg">
+        <span class="inline-block">[</span> ℹ <span class="inline-block">阅 读 指 南</span> <span
+            class="inline-block">]</span>
     </button>
 
     <!-- 右下角缩放控件与版权信息 -->
@@ -978,7 +979,10 @@
             gPos.appendChild(gAnim);
             hexagonsLayer.appendChild(gPos);
 
-            gAnim.addEventListener('pointerdown', (e) => { e.stopPropagation(); handleElementClick(el); });
+            // iOS Touch 兼容处理
+            const touchOrClick = (e) => { e.preventDefault(); e.stopPropagation(); handleElementClick(el); };
+            gAnim.addEventListener('click', touchOrClick);
+            gAnim.addEventListener('touchstart', touchOrClick, { passive: false });
         });
 
         // --- 4. 视口控制 ---
