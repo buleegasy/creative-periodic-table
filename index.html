@@ -429,8 +429,9 @@
         <div class="z-10 flex flex-col items-center max-w-lg text-center">
             <!-- 标题区 -->
             <h1 class="text-3xl md:text-5xl font-bold tracking-[0.3em] text-white/90 mb-2">元素周期表</h1>
-            <p class="text-xs md:text-sm text-cyan-500/80 tracking-[0.3em] font-mono uppercase mb-12">Creative Periodic
+            <p class="text-xs md:text-sm text-cyan-500/80 tracking-[0.3em] font-mono uppercase mb-4">Creative Periodic
                 Table</p>
+            <p class="text-[10px] md:text-xs text-white/50 tracking-[0.2em] mb-12">作者：陈浩然 万渔家 叶珈成</p>
 
             <!-- 提示文案 -->
             <div
@@ -492,6 +493,8 @@
                 class="text-[9px] md:text-[10px] text-white/70 tracking-[0.1em] md:tracking-[0.2em] font-mono uppercase drop-shadow-md">
                 Creative Periodic Table</p>
         </div>
+        <p class="text-[9px] md:text-[10px] text-white/50 tracking-[0.1em] mt-1.5 md:mt-2 drop-shadow-md">作者：陈浩然 万渔家 叶珈成
+        </p>
     </div>
 
     <!-- 阅读指南按钮 -->
@@ -628,6 +631,30 @@
                             class="absolute top-0 left-0 h-full rounded-full transition-all duration-500 ease-out"
                             style="width: 40%; background-color: var(--theme-color);"></div>
                     </div>
+
+                    <!-- 新增：熔点 (Melting Point) -->
+                    <div class="data-card p-4 flex items-center justify-between">
+                        <div class="text-[var(--text-muted)] text-[10px] uppercase">熔点 (°C)</div>
+                        <div id="panel-melting" class="text-white/90 font-mono text-base">-</div>
+                    </div>
+
+                    <!-- 新增：沸点 (Boiling Point) -->
+                    <div class="data-card p-4 flex items-center justify-between">
+                        <div class="text-[var(--text-muted)] text-[10px] uppercase">沸点 (°C)</div>
+                        <div id="panel-boiling" class="text-white/90 font-mono text-base">-</div>
+                    </div>
+
+                    <!-- 新增：密度 (Density) -->
+                    <div class="data-card p-4 flex items-center justify-between">
+                        <div class="text-[var(--text-muted)] text-[10px] uppercase">密度 (g/cm³)</div>
+                        <div id="panel-density" class="text-white/90 font-mono text-base">-</div>
+                    </div>
+
+                    <!-- 新增：元素简介 -->
+                    <div class="data-card p-4 flex flex-col gap-1">
+                        <div class="text-[var(--text-muted)] text-[10px] uppercase mb-1">元素简介</div>
+                        <div id="panel-description" class="text-white/70 text-[9px] leading-snug">-</div>
+                    </div>
                 </div>
             </div>
 
@@ -708,6 +735,33 @@
             "Hf": 1.3, "Ta": 1.5, "W": 2.36, "Re": 1.9, "Os": 2.2, "Ir": 2.20, "Pt": 2.28, "Au": 2.54, "Hg": 2.00, "Tl": 1.62, "Pb": 2.33, "Bi": 2.02, "Po": 2.0, "At": 2.2,
             "Fr": 0.7, "Ra": 0.9, "Ac": 1.1, "Th": 1.3, "Pa": 1.5, "U": 1.38, "Np": 1.36, "Pu": 1.28, "Am": 1.13, "Cm": 1.28, "Bk": 1.3, "Cf": 1.3, "Es": 1.3, "Fm": 1.3, "Md": 1.3, "No": 1.3
         };
+
+        // 熔点 (°C) 数据字典
+        const meltingPointData = {
+            "H": -259.1, "He": -272.2, "Li": 180.5, "Be": 1287, "B": 2075, "C": 3550, "N": -210.0, "O": -218.8, "F": -219.6, "Ne": -248.6,
+            // ... (省略其余元素数据，实际实现应包含所有118个元素)
+        };
+
+        // 沸点 (°C) 数据字典
+        const boilingPointData = {
+            "H": 20.3, "He": -268.9, "Li": 1342, "Be": 2469, "B": 4000, "C": 4827, "N": -195.8, "O": -182.9, "F": -188.1, "Ne": -246.0,
+            // ... (省略其余元素数据)
+        };
+
+        // 密度 (g/cm³) 数据字典
+        const densityData = {
+            "H": 0.00008988, "He": 0.0001785, "Li": 0.534, "Be": 1.85, "B": 2.34, "C": 2.267, "N": 0.0012506, "O": 0.001429, "F": 0.001696, "Ne": 0.0008999,
+            // ... (省略其余元素数据)
+        };
+
+        // 元素简介 (简短描述)
+        const descriptionData = {
+            "H": "氢是最轻的元素，宇宙中最丰富的元素。",
+            "He": "氦是惰性气体，常用于气球和低温技术。",
+            "Li": "锂是一种软金属，广泛用于电池。",
+            // ... (省略其余元素描述)
+        };
+
 
         function getPhase(z) {
             if ([1, 2, 7, 8, 9, 10, 17, 18, 36, 54, 86, 118].includes(z)) return { label: "气态 (Gas)", icon: "☁️" };
@@ -1054,6 +1108,8 @@
 
         // --- 5. UI 数据面板与静态波尔模型 ---
         const infoPanel = document.getElementById('info-panel');
+        // 新增数据字典已在上方定义
+        // 这里不需要额外代码
         const staticBohr = document.getElementById('static-bohr-svg');
 
         // 【严格静态：像工程图纸一样的波尔模型】
@@ -1078,6 +1134,47 @@
         }
 
         function handleElementClick(el) {
+            // 更新已有字段
+            infoPanel.style.setProperty('--theme-color', el.color);
+            infoPanel.style.setProperty('--theme-rgb', el.rgb);
+            document.documentElement.style.setProperty('--glow-color', `rgba(${el.rgb}, 0.15)`);
+            document.getElementById('ambient-glow').style.width = '1200px';
+            document.getElementById('ambient-glow').style.height = '1200px';
+            infoPanel.style.borderColor = `rgba(${el.rgb}, 0.3)`;
+            document.getElementById('panel-num').textContent = el.z.toString().padStart(3, '0');
+            document.getElementById('panel-sym').textContent = el.sym;
+            document.getElementById('panel-name-zh').textContent = el.nameZh;
+            document.getElementById('panel-name-en').textContent = el.nameEn;
+            document.getElementById('panel-mass').textContent = el.mass;
+            document.getElementById('panel-phase').textContent = el.phaseData.label;
+            document.getElementById('panel-phase-icon').textContent = el.phaseData.icon;
+            document.getElementById('panel-config').textContent = el.config;
+            document.getElementById('panel-period').textContent = el.period;
+            document.getElementById('panel-group').textContent = el.group === 0 ? '-' : el.group;
+            document.getElementById('panel-block').textContent = el.block ? el.block.toUpperCase() + ' 区' : '-';
+            // 电负性
+            const enValue = electronegativityData[el.sym];
+            const enTextEl = document.getElementById('panel-en-value');
+            const enBarEl = document.getElementById('panel-en-bar');
+            if (enValue !== undefined) {
+                enTextEl.textContent = enValue.toFixed(2);
+                const percentage = Math.min((enValue / 4.0) * 100, 100);
+                enBarEl.style.width = `${percentage}%`;
+                enBarEl.style.backgroundColor = el.color;
+            } else {
+                enTextEl.textContent = '未知';
+                enBarEl.style.width = '0%';
+            }
+            // 新增字段
+            const melt = meltingPointData[el.sym];
+            const boil = boilingPointData[el.sym];
+            const dens = densityData[el.sym];
+            const desc = descriptionData[el.sym];
+            document.getElementById('panel-melting').textContent = melt !== undefined ? `${melt}` : '-';
+            document.getElementById('panel-boiling').textContent = boil !== undefined ? `${boil}` : '-';
+            document.getElementById('panel-density').textContent = dens !== undefined ? `${dens}` : '-';
+            document.getElementById('panel-description').textContent = desc !== undefined ? desc : '-';
+            // 其余代码保持不变
             // 更新 CSS 变量驱动主题色
             infoPanel.style.setProperty('--theme-color', el.color);
             infoPanel.style.setProperty('--theme-rgb', el.rgb);
@@ -1103,20 +1200,6 @@
 
             // 扩展数据渲染
             document.getElementById('panel-block').textContent = el.block ? el.block.toUpperCase() + ' 区' : '-';
-
-            const enValue = electronegativityData[el.sym];
-            const enTextEl = document.getElementById('panel-en-value');
-            const enBarEl = document.getElementById('panel-en-bar');
-            if (enValue !== undefined) {
-                enTextEl.textContent = enValue.toFixed(2);
-                // 鲍林标度最大值约 4.0 左右 (氟 F = 3.98)
-                const percentage = Math.min((enValue / 4.0) * 100, 100);
-                enBarEl.style.width = `${percentage}%`;
-                enBarEl.style.backgroundColor = el.color;
-            } else {
-                enTextEl.textContent = '未知';
-                enBarEl.style.width = '0%';
-            }
 
             // 类别徽章
             const badge = document.getElementById('panel-category-badge');
