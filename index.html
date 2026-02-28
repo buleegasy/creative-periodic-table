@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>元素周期表</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --bg-base: #060913;
+            /* 极深背景 */
+            --panel-bg: #111827;
+            /* 卡片背景 */
+            --card-bg: #0B0F19;
+            /* 数据小卡片背景 */
+            --text-main: #F8FAFC;
+            --text-muted: #64748B;
+            --border-color: rgba(255, 255, 255, 0.08);
+
+            /* 液体玻璃拟态与动态泛光配置 (Apple Style) */
+            --glass-bg: rgba(17, 24, 39, 0.55);
+            --glass-blur: blur(24px) saturate(180%);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-highlight: rgba(255, 255, 255, 0.15);
+            /* 顶部内阴影高光 */
+            --glow-color: rgba(255, 255, 255, 0.03);
+            /* 默认微弱白光 */
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', -apple-system, sans-serif;
+            margin: 0;
+            overflow: hidden;
+            touch-action: pan-x pan-y;
+            /* 仅允许基本拖拽防异常拉伸 */
+            -webkit-font-smoothing: antialiased;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #svg-container {
+            width: 100%;
+            height: 100%;
+            cursor: grab;
+            outline: none;
+            position: relative;
+            z-index: 2;
+        }
+
+        .grabbing {
+            cursor: grabbing !important;
+        }
+
+        /* 随鼠标移动的全局泛光背景 */
+        #ambient-glow {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 800px;
+            height: 800px;
+            transform: translate(-50%, -50%);
+            /* 现在相对于鼠标中心偏移一半长宽 */
+            background: radial-gradient(circle, var(--glow-color) 0%, rgba(6, 9, 19, 0) 70%);
+            pointer-events: none;
+            z-index: 1;
+            transition: width 0.3s ease, height 0.3s ease, background 0.5s ease;
+            will-change: transform;
+        }
+
+        /* 科学隐藏连线：同价态桥梁 (Valence Bridges) */
+        .valence-bridge {
+            fill: none;
+            stroke-width: 2px;
+            stroke-dasharray: 6 12;
+            stroke-linecap: round;
+            opacity: 0;
+            /* 默认隐藏，或者使用低透明度显示 */
+            animation: quantumFlow 3s linear infinite;
+            filter: drop-shadow(0 0 6px currentColor);
+            transition: opacity 1s ease;
+        }
+
+        /* 科学隐藏连线：对角线法则 (Diagonal Rules) */
+        .diagonal-link {
+            fill: none;
+            stroke-width: 1.5px;
+            stroke-dasharray: 2 4;
+            opacity: 0.15;
+            transition: opacity 0.5s ease;
+        }
+
+        @keyframes quantumFlow {
+            from {
+                stroke-dashoffset: 18;
+            }
+
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        /* 鼠标悬停网格时显现虫洞 */
+        #svg-container:hover .valence-bridge {
+            opacity: 0.6;
+        }
+
+        #svg-container:hover .diagonal-link {
+            opacity: 0.4;
+        }
+
+        /* 鼠标直接悬停在连线上时的高亮实线特效 */
+        .valence-bridge.hovered,
+        .diagonal-link.hovered {
+            opacity: 1 !important;
+            stroke-dasharray: none !important;
+            filter: drop-shadow(0 0 10px currentColor);
+            stroke-width: 2.5px;
+        }
+
+        /* 阅读指南 Modal - Apple Liquid Glass */
+        #guide-modal {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 100vw;
+            max-width: 420px;
+            height: 100vh;
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border-left: 1px solid var(--glass-border);
+            box-shadow: -16px 0 40px rgba(0, 0, 0, 0.5), inset 1px 0 1px var(--glass-highlight);
+            transform: translateX(100%);
+            opacity: 0;
+            pointer-events: none;
+            transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s ease;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #guide-modal.show {
+            transform: translateX(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* 模糊背景遮罩 */
+        #guide-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(4px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+            z-index: 90;
+        }
+
+        #guide-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* 引导屏 Intro Splash Screen */
+        #intro-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000000;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 1s cubic-bezier(0.4, 0, 0.2, 1), transform 1s cubic-bezier(0.4, 0, 0.2, 1);
+            color: white;
+            padding: 2rem;
+        }
+
+        #intro-screen.fade-out {
+            opacity: 0;
+            transform: scale(1.05);
+            /* 微微放大消散 */
+            pointer-events: none;
+        }
+
+        .guide-content {
+            padding: 2rem;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        .guide-section {
+            margin-bottom: 2rem;
+        }
+
+        .guide-h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+            color: #fff;
+        }
+
+        .guide-p {
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+        }
+
+        .guide-highlight {
+            color: var(--theme-color, #06B6D4);
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 500;
+        }
+
+        .guide-strong {
+            color: #fff;
+            font-weight: 500;
+        }
+
+        /* 量子连线 Tooltip 悬浮提示 */
+        #link-tooltip {
+            position: fixed;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.375rem;
+            background: rgba(17, 24, 39, 0.9);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.9);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            pointer-events: none;
+            opacity: 0;
+            z-index: 50;
+            transition: opacity 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            transform: translate(15px, 15px);
+            /* 默认位于鼠标右下方 */
+        }
+
+        #link-tooltip.show {
+            opacity: 1;
+        }
+
+        /* 蜂巢节点样式 */
+        .element-group {
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .element-hex {
+            transition: all 0.2s ease;
+            fill: rgba(255, 255, 255, 0.02);
+            transform-origin: 0 0;
+        }
+
+        .element-sym {
+            font-weight: 500;
+            transition: all 0.2s ease;
+            transform-origin: 0 0;
+        }
+
+        .element-num {
+            font-family: 'JetBrains Mono', monospace;
+            opacity: 0.6;
+            transition: all 0.2s ease;
+        }
+
+        @media (hover: hover) {
+            .element-group:hover .element-hex {
+                stroke-width: 2px;
+                fill: var(--theme-color);
+                fill-opacity: 0.1;
+                transform: scale(1.1);
+            }
+
+            .element-group:hover .element-sym {
+                transform: scale(1.1);
+                font-weight: 600;
+            }
+        }
+
+        .element-selected .element-hex {
+            stroke-width: 2px !important;
+            stroke: var(--theme-color) !important;
+            fill: var(--theme-color) !important;
+            fill-opacity: 0.15 !important;
+            filter: drop-shadow(0 0 8px rgba(var(--theme-rgb), 0.5));
+            transform: scale(1.15);
+        }
+
+        .element-selected .element-sym {
+            font-weight: 700;
+            fill: #ffffff !important;
+            transform: scale(1.15);
+        }
+
+        .element-selected .element-num {
+            opacity: 1;
+            fill: #ffffff !important;
+        }
+
+        /* 底层网格连线 (弱化) */
+        .mesh-line {
+            stroke: rgba(255, 255, 255, 0.03);
+            stroke-width: 1px;
+            transition: all 0.3s ease;
+        }
+
+        .mesh-line-active {
+            stroke-width: 1.5px !important;
+            stroke-dasharray: 4 4;
+            opacity: 0.6;
+        }
+
+        /* 面板 UI - Apple Liquid Glass 液体玻璃拟态 */
+        .pro-panel {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow:
+                0 16px 40px 0 rgba(0, 0, 0, 0.6),
+                /* 深沉的外阴影提供纵深感 */
+                inset 0 1px 1px 0 var(--glass-highlight);
+            /* 玻璃厚度折射高光 */
+            transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s ease, border-color 0.5s ease;
+        }
+
+        #info-panel {
+            transform: translateY(120%);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #info-panel.show {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        @media (min-width: 768px) {
+            .pro-panel {
+                border: 1px solid var(--border-color);
+            }
+
+            #info-panel {
+                transform: translateY(-50%) translateX(-40px);
+            }
+
+            #info-panel.show {
+                transform: translateY(-50%) translateX(0);
+            }
+        }
+
+        .data-card {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            box-shadow:
+                0 4px 12px 0 rgba(0, 0, 0, 0.15),
+                inset 0 1px 1px rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .data-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* 静态波尔模型样式 */
+        .bohr-ring {
+            fill: none;
+            stroke: var(--theme-color);
+            stroke-width: 0.8;
+            stroke-dasharray: 2 4;
+            /* 工程图纸虚线感 */
+            opacity: 0.4;
+        }
+
+        .bohr-dot {
+            fill: var(--theme-color);
+        }
+
+        .pb-safe {
+            padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+        }
+
+        ::-webkit-scrollbar {
+            width: 0px;
+        }
+    </style>
+</head>
+
+<body class="select-none">
+
+    <!-- 系统引导屏 (Intro Splash Screen) -->
+    <div id="intro-screen">
+        <!-- 装饰性光效 -->
+        <div class="absolute inset-0 flex items-center justify-center opacity-30 pointer-events-none">
+            <div class="w-[500px] h-[500px] rounded-full bg-cyan-900/40 blur-[100px]"></div>
+        </div>
+
+        <div class="z-10 flex flex-col items-center max-w-lg text-center">
+            <!-- 标题区 -->
+            <h1 class="text-3xl md:text-5xl font-bold tracking-[0.3em] text-white/90 mb-2">元素周期表</h1>
+            <p class="text-xs md:text-sm text-cyan-500/80 tracking-[0.3em] font-mono uppercase mb-12">Creative Periodic
+                Table</p>
+
+            <!-- 提示文案 -->
+            <div
+                class="bg-white/[0.03] border border-white/10 rounded-2xl p-6 md:p-8 backdrop-blur-xl mb-12 relative overflow-hidden">
+                <div
+                    class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent">
+                </div>
+                <div class="flex items-center justify-center gap-3 mb-4">
+                    <svg class="w-5 h-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    <span class="text-sm font-semibold tracking-widest text-white/80">设备环境建议</span>
+                </div>
+                <p class="text-sm md:text-base text-white/60 leading-relaxed font-light">
+                    本项目包含高密度的元素信息网络与精细的交互动画。<br class="hidden md:block" />
+                    为获得<span class="text-white/90 font-medium">最佳的网格浏览体验</span>与<span
+                        class="text-white/90 font-medium">完整的信息阅读视野</span>，强烈建议您使用<span
+                        class="text-cyan-400 font-medium">电脑端浏览器</span>访问本页面。
+                </p>
+            </div>
+
+            <!-- 进入按钮 -->
+            <button id="btn-initiate"
+                class="group relative px-8 py-4 bg-transparent overflow-hidden rounded-lg transition-all active:scale-95">
+                <div
+                    class="absolute inset-0 border border-white/20 rounded-lg group-hover:border-white/50 transition-colors">
+                </div>
+                <div class="absolute inset-0 bg-white/5 group-hover:bg-white/10 transition-colors"></div>
+                <span
+                    class="relative text-sm tracking-[0.3em] font-mono text-white/80 group-hover:text-white transition-colors flex items-center justify-center gap-3">
+                    [ 开始浏览项目 ]
+                </span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 顶层环境光效 -->
+    <div id="ambient-glow"></div>
+
+    <div id="svg-container">
+        <!-- 量子羁绊悬浮提示框 -->
+        <div id="link-tooltip"></div>
+        <svg id="canvas" width="100%" height="100%">
+            <g id="viewport">
+                <g id="mesh-layer"></g>
+                <g id="quantum-links-layer"></g> <!-- 新增：量子羁绊连线层 -->
+                <g id="hexagons-layer"></g>
+            </g>
+        </svg>
+    </div>
+
+    <!-- 顶部标题 -->
+    <div class="absolute top-4 left-4 md:top-8 md:left-8 z-10 pointer-events-none">
+        <h1 class="text-lg md:text-2xl font-semibold tracking-[0.2em] text-white/90">元素周期表</h1>
+        <div class="flex items-center gap-2 mt-1 md:mt-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-cyan-500 hidden md:block"></span>
+            <p class="text-[8px] md:text-[10px] text-white/50 tracking-[0.1em] md:tracking-[0.2em] font-mono uppercase">
+                Creative Periodic Table</p>
+        </div>
+    </div>
+
+    <!-- 阅读指南按钮 -->
+    <button id="btn-open-guide"
+        class="absolute top-4 right-4 md:top-8 md:right-8 z-30 pointer-events-auto px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-white/10 bg-[#111827]/80 backdrop-blur-md text-[10px] md:text-xs tracking-widest text-white/70 hover:bg-white/5 hover:text-white cursor-pointer transition-all active:scale-95 flex items-center gap-1 md:gap-2 font-mono">
+        <span class="hidden md:inline">[</span> ℹ<span class="hidden md:inline">阅 读 指 南</span> <span
+            class="hidden md:inline">]</span>
+    </button>
+
+    <!-- 右下角缩放控件与版权信息 -->
+    <div class="fixed bottom-8 right-6 md:bottom-8 md:right-8 flex flex-col items-end gap-2 z-40 pointer-events-auto">
+        <div class="flex flex-col gap-2">
+            <button id="btn-zoom-in"
+                class="w-10 h-10 rounded-xl bg-[#111827] border border-white/10 flex items-center justify-center text-lg text-white/70 active:scale-95 transition-all">+</button>
+            <button id="btn-zoom-out"
+                class="w-10 h-10 rounded-xl bg-[#111827] border border-white/10 flex items-center justify-center text-lg text-white/70 active:scale-95 transition-all">-</button>
+            <button id="btn-zoom-reset"
+                class="w-10 h-10 rounded-xl bg-[#111827] border border-white/10 flex items-center justify-center text-xs text-white/70 active:scale-95 transition-all font-mono">⌂</button>
+        </div>
+        <div class="mt-2 text-[10px] text-white/30 font-mono tracking-wider">&copy; Buleegasy</div>
+    </div>
+
+    <!-- 底部专业数据面板 (严格对齐截图 UI) -->
+    <div id="info-panel"
+        class="fixed bottom-0 left-0 w-full md:w-[420px] md:top-1/2 md:bottom-auto md:left-8 pro-panel rounded-t-[24px] md:rounded-3xl p-5 md:p-6 pb-2 md:pb-safe z-50 flex flex-col max-h-[60vh] md:max-h-[90vh]">
+        <!-- 移动端把手 -->
+        <div class="w-12 h-1 bg-white/10 rounded-full mx-auto mb-4 md:hidden"></div>
+
+        <!-- 卡片头部 -->
+        <div class="flex justify-between items-start mb-6">
+            <div class="flex gap-4 items-center">
+                <!-- 大型六边形 Avatar -->
+                <div class="relative w-20 h-[92px] flex items-center justify-center flex-shrink-0">
+                    <svg width="100%" height="100%" class="absolute top-0 left-0">
+                        <polygon id="panel-hero-hex" points="40,2 78,24 78,68 40,90 2,68 2,24" fill="transparent"
+                            stroke="var(--theme-color)" stroke-width="2" />
+                    </svg>
+                    <div class="z-10 text-center flex flex-col items-center justify-center w-full h-full pt-1">
+                        <div id="panel-num"
+                            class="text-white/50 text-[10px] font-mono leading-none tracking-wider absolute top-4 left-4">
+                            024</div>
+                        <div id="panel-sym" class="text-3xl font-bold text-white leading-none mt-2"
+                            style="color: var(--theme-color)">Cr</div>
+                    </div>
+                </div>
+
+                <!-- 元素名称与徽章 -->
+                <div class="pt-2">
+                    <div id="panel-name-zh" class="text-2xl text-white/90 font-semibold tracking-widest mb-1">铬</div>
+                    <div id="panel-name-en"
+                        class="text-[10px] text-white/40 font-mono uppercase tracking-[0.2em] mb-2.5">Chromium</div>
+                    <div class="inline-flex">
+                        <span id="panel-category-badge"
+                            class="px-3 py-1 rounded-md text-[10px] font-medium tracking-widest border"
+                            style="color: var(--theme-color); border-color: var(--theme-color); background-color: rgba(var(--theme-rgb), 0.1);">过渡金属</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 关闭按钮 -->
+            <button id="btn-close-info"
+                class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 transition-colors">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- 数据区滚动容器 -->
+        <div class="overflow-y-auto pr-1 flex-grow space-y-4 touch-pan-y">
+
+            <!-- 第一行：质量与物态 -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="data-card p-4">
+                    <div class="text-[var(--text-muted)] text-[10px] mb-2">相对原子质量</div>
+                    <div id="panel-mass" class="text-white/90 font-mono text-base tracking-wide">51.996</div>
+                </div>
+                <div class="data-card p-4">
+                    <div class="text-[var(--text-muted)] text-[10px] mb-2">常温物态</div>
+                    <div class="flex items-center gap-2">
+                        <span id="panel-phase-icon" class="text-sm opacity-80">🧊</span>
+                        <div id="panel-phase" class="text-white/90 text-sm tracking-wide">固态 (Solid)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第二行：电子排布与静态图 -->
+            <div class="data-card p-4 flex items-stretch justify-between relative overflow-hidden">
+                <div class="flex flex-col justify-center py-1 z-10">
+                    <div class="text-[var(--text-muted)] text-[10px] uppercase mb-3">电子排布 (ELECTRON CONFIG)</div>
+                    <div id="panel-config" class="font-mono text-lg tracking-wider mb-4"
+                        style="color: var(--theme-color);">[Ar] 3d⁵ 4s¹</div>
+                    <!-- 壳层胶囊 -->
+                    <div class="flex flex-wrap gap-2" id="panel-shells-text">
+                        <!-- e.g. <div class="bg-[#111827] border border-white/10 rounded-md px-2 py-1 text-[9px] font-mono text-white/50">K: <span class="text-white/90">2</span></div> -->
+                    </div>
+                </div>
+
+                <!-- 静态波尔模型 SVG (不转动，纯几何结构) -->
+                <div class="w-20 h-20 flex-shrink-0 flex items-center justify-center z-10 self-center">
+                    <svg viewBox="0 0 100 100" class="w-full h-full" id="static-bohr-svg">
+                        <circle cx="50" cy="50" r="4" fill="var(--theme-color)" />
+                        <!-- JS 注入虚线圈和点 -->
+                    </svg>
+                </div>
+            </div>
+
+            <!-- 第三行：位置 -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="data-card p-4 flex items-center justify-between">
+                    <div class="text-[var(--text-muted)] text-[10px] uppercase">周期 PERIOD</div>
+                    <div id="panel-period" class="text-white/90 font-mono text-base">4</div>
+                </div>
+                <div class="data-card p-4 flex items-center justify-between">
+                    <div class="text-[var(--text-muted)] text-[10px] uppercase">族 GROUP</div>
+                    <div id="panel-group" class="text-white/90 font-mono text-base">6</div>
+                </div>
+
+                <!-- 新增：区 (Block) -->
+                <div class="data-card p-4 flex items-center justify-between">
+                    <div class="text-[var(--text-muted)] text-[10px] uppercase">区 BLOCK</div>
+                    <div id="panel-block" class="text-white/90 font-mono text-base">D 区</div>
+                </div>
+
+                <!-- 新增：鲍林电负性 -->
+                <div class="data-card p-4 flex flex-col justify-center gap-1">
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="text-[var(--text-muted)] text-[10px] uppercase">电负性 (PAULING)</div>
+                        <div id="panel-en-value" class="text-white/90 font-mono text-base leading-none">1.66</div>
+                    </div>
+                    <!-- 极客风进度条 -->
+                    <div class="w-full h-1 bg-white/10 rounded-full overflow-hidden relative">
+                        <div id="panel-en-bar"
+                            class="absolute top-0 left-0 h-full rounded-full transition-all duration-500 ease-out"
+                            style="width: 40%; background-color: var(--theme-color);"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 阅读指南遮罩与抽屉 -->
+    <div id="guide-overlay"></div>
+    <aside id="guide-modal" class="flex flex-col pb-safe">
+        <div class="flex justify-between items-center p-6 border-b border-white/10 shrink-0">
+            <div class="text-sm font-semibold tracking-widest text-white/90 uppercase">How To Read</div>
+            <button id="btn-close-guide"
+                class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 transition-colors">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <div class="guide-content touch-pan-y">
+            <div class="guide-section">
+                <h2 class="guide-h2">1. 正六边形镶嵌</h2>
+                <div class="w-8 h-1 bg-white/20 mb-4 rounded-full"></div>
+                <p class="guide-p">采用<span class="guide-strong">拓扑结构 (Hexagonal Topology)</span>打破传统二维网格。</p>
+                <p class="guide-p">6 维度的接触面天然呈现了<span class="guide-highlight">对角线相似性</span>（如 Li-Mg，Be-Al），形成了最短的信息传导路径。
+                </p>
+            </div>
+
+            <div class="guide-section">
+                <h2 class="guide-h2">2. 量子羁绊网络</h2>
+                <div class="w-8 h-1 bg-white/20 mb-4 rounded-full"></div>
+                <p class="guide-p">悬停图谱可见隐秘的跨区连线：</p>
+                <ul class="list-disc pl-5 mt-2 space-y-2 mb-4">
+                    <li class="guide-p"><span class="guide-highlight">同价态桥梁 (Valence Bridges)</span>：C-Ti、O-Cr
+                        等连线。它们相隔遥远，但最高正化合价相同。</li>
+                    <li class="guide-p"><span class="guide-highlight">幽灵触控区 (Ghost Hitboxes)</span>：所有跨区连线均覆盖了 24px
+                        的隐形交互区，指尖轻扫即可点亮量子电场并查看化学共鸣数据。</li>
+                    <li class="guide-p"><span class="guide-strong">网格定位轴 (Mesh Lines)</span>：点击元素高亮底层关联，标示其几何重心。</li>
+                </ul>
+            </div>
+
+            <div class="guide-section">
+                <h2 class="guide-h2">3. 数据卡片</h2>
+                <div class="w-8 h-1 bg-white/20 mb-4 rounded-full"></div>
+                <p class="guide-p"><span class="guide-strong">莫兰迪十色</span>：替代高饱和原色，精准划分过渡金属、卤素等族群。</p>
+                <p class="guide-p"><span class="guide-strong">静态波尔模型 (Bohr Model)</span>：工程图级别，内紧外松，精确结合 <span
+                        class="guide-highlight">K, L, M, N...</span> 电子层计算。</p>
+            </div>
+        </div>
+    </aside>
+
+    <script>
+        // --- 1. 数据配置 (修复了 117 鿬, 118 鿫) ---
+        const rawData = "1,H,氢,Hydrogen,1,1,s,1.008,1s¹|2,He,氦,Helium,1,18,s,4.0026,1s²|3,Li,锂,Lithium,2,1,s,6.94,[He] 2s¹|4,Be,铍,Beryllium,2,2,s,9.0122,[He] 2s²|5,B,硼,Boron,2,13,p,10.81,[He] 2s² 2p¹|6,C,碳,Carbon,2,14,p,12.011,[He] 2s² 2p²|7,N,氮,Nitrogen,2,15,p,14.007,[He] 2s² 2p³|8,O,氧,Oxygen,2,16,p,15.999,[He] 2s² 2p⁴|9,F,氟,Fluorine,2,17,p,18.998,[He] 2s² 2p⁵|10,Ne,氖,Neon,2,18,p,20.180,[He] 2s² 2p⁶|11,Na,钠,Sodium,3,1,s,22.990,[Ne] 3s¹|12,Mg,镁,Magnesium,3,2,s,24.305,[Ne] 3s²|13,Al,铝,Aluminum,3,13,p,26.982,[Ne] 3s² 3p¹|14,Si,硅,Silicon,3,14,p,28.085,[Ne] 3s² 3p²|15,P,磷,Phosphorus,3,15,p,30.974,[Ne] 3s² 3p³|16,S,硫,Sulfur,3,16,p,32.06,[Ne] 3s² 3p⁴|17,Cl,氯,Chlorine,3,17,p,35.45,[Ne] 3s² 3p⁵|18,Ar,氩,Argon,3,18,p,39.948,[Ne] 3s² 3p⁶|19,K,钾,Potassium,4,1,s,39.098,[Ar] 4s¹|20,Ca,钙,Calcium,4,2,s,40.078,[Ar] 4s²|21,Sc,钪,Scandium,4,3,d,44.956,[Ar] 3d¹ 4s²|22,Ti,钛,Titanium,4,4,d,47.867,[Ar] 3d² 4s²|23,V,钒,Vanadium,4,5,d,50.942,[Ar] 3d³ 4s²|24,Cr,铬,Chromium,4,6,d,51.996,[Ar] 3d⁵ 4s¹|25,Mn,锰,Manganese,4,7,d,54.938,[Ar] 3d⁵ 4s²|26,Fe,铁,Iron,4,8,d,55.845,[Ar] 3d⁶ 4s²|27,Co,钴,Cobalt,4,9,d,58.933,[Ar] 3d⁷ 4s²|28,Ni,镍,Nickel,4,10,d,58.693,[Ar] 3d⁸ 4s²|29,Cu,铜,Copper,4,11,d,63.546,[Ar] 3d¹⁰ 4s¹|30,Zn,锌,Zinc,4,12,d,65.38,[Ar] 3d¹⁰ 4s²|31,Ga,镓,Gallium,4,13,p,69.723,[Ar] 3d¹⁰ 4s² 4p¹|32,Ge,锗,Germanium,4,14,p,72.630,[Ar] 3d¹⁰ 4s² 4p²|33,As,砷,Arsenic,4,15,p,74.922,[Ar] 3d¹⁰ 4s² 4p³|34,Se,硒,Selenium,4,16,p,78.971,[Ar] 3d¹⁰ 4s² 4p⁴|35,Br,溴,Bromine,4,17,p,79.904,[Ar] 3d¹⁰ 4s² 4p⁵|36,Kr,氪,Krypton,4,18,p,83.798,[Ar] 3d¹⁰ 4s² 4p⁶|37,Rb,铷,Rubidium,5,1,s,85.468,[Kr] 5s¹|38,Sr,锶,Strontium,5,2,s,87.62,[Kr] 5s²|39,Y,钇,Yttrium,5,3,d,88.906,[Kr] 4d¹ 5s²|40,Zr,锆,Zirconium,5,4,d,91.224,[Kr] 4d² 5s²|41,Nb,铌,Niobium,5,5,d,92.906,[Kr] 4d⁴ 5s¹|42,Mo,钼,Molybdenum,5,6,d,95.95,[Kr] 4d⁵ 5s¹|43,Tc,锝,Technetium,5,7,d,(98),[Kr] 4d⁵ 5s²|44,Ru,钌,Ruthenium,5,8,d,101.07,[Kr] 4d⁷ 5s¹|45,Rh,铑,Rhodium,5,9,d,102.91,[Kr] 4d⁸ 5s¹|46,Pd,钯,Palladium,5,10,d,106.42,[Kr] 4d¹⁰|47,Ag,银,Silver,5,11,d,107.87,[Kr] 4d¹⁰ 5s¹|48,Cd,镉,Cadmium,5,12,d,112.41,[Kr] 4d¹⁰ 5s²|49,In,铟,Indium,5,13,p,114.82,[Kr] 4d¹⁰ 5s² 5p¹|50,Sn,锡,Tin,5,14,p,118.71,[Kr] 4d¹⁰ 5s² 5p²|51,Sb,锑,Antimony,5,15,p,121.76,[Kr] 4d¹⁰ 5s² 5p³|52,Te,碲,Tellurium,5,16,p,127.60,[Kr] 4d¹⁰ 5s² 5p⁴|53,I,碘,Iodine,5,17,p,126.90,[Kr] 4d¹⁰ 5s² 5p⁵|54,Xe,氙,Xenon,5,18,p,131.29,[Kr] 4d¹⁰ 5s² 5p⁶|55,Cs,铯,Cesium,6,1,s,132.91,[Xe] 6s¹|56,Ba,钡,Barium,6,2,s,137.33,[Xe] 6s²|57,La,镧,Lanthanum,6,3,f,138.91,[Xe] 5d¹ 6s²|58,Ce,铈,Cerium,6,3,f,140.12,[Xe] 4f¹ 5d¹ 6s²|59,Pr,镨,Praseodymium,6,3,f,140.91,[Xe] 4f³ 6s²|60,Nd,钕,Neodymium,6,3,f,144.24,[Xe] 4f⁴ 6s²|61,Pm,钷,Promethium,6,3,f,(145),[Xe] 4f⁵ 6s²|62,Sm,钐,Samarium,6,3,f,150.36,[Xe] 4f⁶ 6s²|63,Eu,铕,Europium,6,3,f,151.96,[Xe] 4f⁷ 6s²|64,Gd,钆,Gadolinium,6,3,f,157.25,[Xe] 4f⁷ 5d¹ 6s²|65,Tb,铽,Terbium,6,3,f,158.93,[Xe] 4f⁹ 6s²|66,Dy,镝,Dysprosium,6,3,f,162.50,[Xe] 4f¹⁰ 6s²|67,Ho,钬,Holmium,6,3,f,164.93,[Xe] 4f¹¹ 6s²|68,Er,铒,Erbium,6,3,f,167.26,[Xe] 4f¹² 6s²|69,Tm,铥,Thulium,6,3,f,168.93,[Xe] 4f¹³ 6s²|70,Yb,镱,Ytterbium,6,3,f,173.05,[Xe] 4f¹⁴ 6s²|71,Lu,镥,Lutetium,6,3,d,174.97,[Xe] 4f¹⁴ 5d¹ 6s²|72,Hf,铪,Hafnium,6,4,d,178.49,[Xe] 4f¹⁴ 5d² 6s²|73,Ta,钽,Tantalum,6,5,d,180.95,[Xe] 4f¹⁴ 5d³ 6s²|74,W,钨,Tungsten,6,6,d,183.84,[Xe] 4f¹⁴ 5d⁴ 6s²|75,Re,铼,Rhenium,6,7,d,186.21,[Xe] 4f¹⁴ 5d⁵ 6s²|76,Os,锇,Osmium,6,8,d,190.23,[Xe] 4f¹⁴ 5d⁶ 6s²|77,Ir,铱,Iridium,6,9,d,192.22,[Xe] 4f¹⁴ 5d⁷ 6s²|78,Pt,铂,Platinum,6,10,d,195.08,[Xe] 4f¹⁴ 5d⁹ 6s¹|79,Au,金,Gold,6,11,d,196.97,[Xe] 4f¹⁴ 5d¹⁰ 6s¹|80,Hg,汞,Mercury,6,12,d,200.59,[Xe] 4f¹⁴ 5d¹⁰ 6s²|81,Tl,铊,Thallium,6,13,p,204.38,[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p¹|82,Pb,铅,Lead,6,14,p,207.2,[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p²|83,Bi,铋,Bismuth,6,15,p,208.98,[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p³|84,Po,钋,Polonium,6,16,p,(209),[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁴|85,At,砹,Astatine,6,17,p,(210),[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁵|86,Rn,氡,Radon,6,18,p,(222),[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁶|87,Fr,钫,Francium,7,1,s,(223),[Rn] 7s¹|88,Ra,镭,Radium,7,2,s,(226),[Rn] 7s²|89,Ac,锕,Actinium,7,3,f,(227),[Rn] 6d¹ 7s²|90,Th,钍,Thorium,7,3,f,232.04,[Rn] 6d² 7s²|91,Pa,镤,Protactinium,7,3,f,231.04,[Rn] 5f² 6d¹ 7s²|92,U,铀,Uranium,7,3,f,238.03,[Rn] 5f³ 6d¹ 7s²|93,Np,镎,Neptunium,7,3,f,(237),[Rn] 5f⁴ 6d¹ 7s²|94,Pu,钚,Plutonium,7,3,f,(244),[Rn] 5f⁶ 7s²|95,Am,镅,Americium,7,3,f,(243),[Rn] 5f⁷ 7s²|96,Cm,锔,Curium,7,3,f,(247),[Rn] 5f⁷ 6d¹ 7s²|97,Bk,锫,Berkelium,7,3,f,(247),[Rn] 5f⁹ 7s²|98,Cf,锎,Californium,7,3,f,(251),[Rn] 5f¹⁰ 7s²|99,Es,锿,Einsteinium,7,3,f,(252),[Rn] 5f¹¹ 7s²|100,Fm,镄,Fermium,7,3,f,(257),[Rn] 5f¹² 7s²|101,Md,钔,Mendelevium,7,3,f,(258),[Rn] 5f¹³ 7s²|102,No,锘,Nobelium,7,3,f,(259),[Rn] 5f¹⁴ 7s²|103,Lr,铹,Lawrencium,7,3,d,(266),[Rn] 5f¹⁴ 7s² 7p¹|104,Rf,𬲿,Rutherfordium,7,4,d,(267),[Rn] 5f¹⁴ 6d² 7s²|105,Db,𬭊,Dubnium,7,5,d,(268),[Rn] 5f¹⁴ 6d³ 7s²|106,Sg,𬭳,Seaborgium,7,6,d,(269),[Rn] 5f¹⁴ 6d⁴ 7s²|107,Bh,𬭛,Bohrium,7,7,d,(270),[Rn] 5f¹⁴ 6d⁵ 7s²|108,Hs,𬭶,Hassium,7,8,d,(277),[Rn] 5f¹⁴ 6d⁶ 7s²|109,Mt,鿏,Meitnerium,7,9,d,(278),[Rn] 5f¹⁴ 6d⁷ 7s²|110,Ds,𫟼,Darmstadtium,7,10,d,(281),[Rn] 5f¹⁴ 6d⁸ 7s²|111,Rg,𬬭,Roentgenium,7,11,d,(282),[Rn] 5f¹⁴ 6d⁹ 7s²|112,Cn,鎶,Copernicium,7,12,d,(285),[Rn] 5f¹⁴ 6d¹⁰ 7s²|113,Nh,鿭,Nihonium,7,13,p,(286),[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p¹|114,Fl,𫓧,Flerovium,7,14,p,(289),[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p²|115,Mc,镆,Moscovium,7,15,p,(290),[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p³|116,Lv,𫟷,Livermorium,7,16,p,(293),[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁴|117,Ts,鿬,Tennessine,7,17,p,(294),[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁵|118,Og,鿫,Oganesson,7,18,p,(294),[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁶";
+
+        // 高级配色系 (对照截图中的明度与饱和度)
+        function getCategory(z, group) {
+            if (z >= 57 && z <= 71) return { id: 'lanthanide', name: '镧系元素', color: '#FBBF24', rgb: '251,191,36' };
+            if (z >= 89 && z <= 103) return { id: 'actinide', name: '锕系元素', color: '#F43F5E', rgb: '244,63,94' };
+            if (group === 1 && z !== 1) return { id: 'alkali', name: '碱金属', color: '#EF4444', rgb: '239,68,68' };
+            if (group === 2) return { id: 'alkaline_earth', name: '碱土金属', color: '#F97316', rgb: '249,115,22' };
+            if (group >= 3 && group <= 12) return { id: 'transition', name: '过渡金属', color: '#10B981', rgb: '16,185,129' };
+            if ([13, 31, 49, 50, 81, 82, 83, 84, 114, 115, 116].includes(z)) return { id: 'post_transition', name: '后过渡金属', color: '#06B6D4', rgb: '6,182,212' };
+            if ([5, 14, 32, 33, 51, 52].includes(z)) return { id: 'metalloid', name: '类金属', color: '#D946EF', rgb: '217,70,239' };
+            if ([1, 6, 7, 8, 15, 16, 34].includes(z)) return { id: 'nonmetal', name: '非金属', color: '#3B82F6', rgb: '59,130,246' };
+            if ([9, 17, 35, 53, 85, 117].includes(z)) return { id: 'halogen', name: '卤素', color: '#EC4899', rgb: '236,72,153' };
+            if (group === 18) return { id: 'noble', name: '稀有气体', color: '#8B5CF6', rgb: '139,92,246' };
+            return { id: 'unknown', name: '未知', color: '#9CA3AF', rgb: '156,163,175' };
+        }
+
+        // 鲍林电负性字典 (Pauling Scale) - 提供常被查询的前 100 多种元素
+        const electronegativityData = {
+            "H": 2.20, "Li": 0.98, "Be": 1.57, "B": 2.04, "C": 2.55, "N": 3.04, "O": 3.44, "F": 3.98,
+            "Na": 0.93, "Mg": 1.31, "Al": 1.61, "Si": 1.90, "P": 2.19, "S": 2.58, "Cl": 3.16,
+            "K": 0.82, "Ca": 1.00, "Sc": 1.36, "Ti": 1.54, "V": 1.63, "Cr": 1.66, "Mn": 1.55, "Fe": 1.83, "Co": 1.88, "Ni": 1.91, "Cu": 1.90, "Zn": 1.65, "Ga": 1.81, "Ge": 2.01, "As": 2.18, "Se": 2.55, "Br": 2.96, "Kr": 3.00,
+            "Rb": 0.82, "Sr": 0.95, "Y": 1.22, "Zr": 1.33, "Nb": 1.6, "Mo": 2.16, "Tc": 1.9, "Ru": 2.2, "Rh": 2.28, "Pd": 2.20, "Ag": 1.93, "Cd": 1.69, "In": 1.78, "Sn": 1.96, "Sb": 2.05, "Te": 2.1, "I": 2.66, "Xe": 2.6,
+            "Cs": 0.79, "Ba": 0.89, "La": 1.1, "Ce": 1.12, "Pr": 1.13, "Nd": 1.14, "Sm": 1.17, "Eu": 1.2, "Gd": 1.2, "Tb": 1.1, "Dy": 1.22, "Ho": 1.23, "Er": 1.24, "Tm": 1.25, "Yb": 1.1, "Lu": 1.27,
+            "Hf": 1.3, "Ta": 1.5, "W": 2.36, "Re": 1.9, "Os": 2.2, "Ir": 2.20, "Pt": 2.28, "Au": 2.54, "Hg": 2.00, "Tl": 1.62, "Pb": 2.33, "Bi": 2.02, "Po": 2.0, "At": 2.2,
+            "Fr": 0.7, "Ra": 0.9, "Ac": 1.1, "Th": 1.3, "Pa": 1.5, "U": 1.38, "Np": 1.36, "Pu": 1.28, "Am": 1.13, "Cm": 1.28, "Bk": 1.3, "Cf": 1.3, "Es": 1.3, "Fm": 1.3, "Md": 1.3, "No": 1.3
+        };
+
+        function getPhase(z) {
+            if ([1, 2, 7, 8, 9, 10, 17, 18, 36, 54, 86, 118].includes(z)) return { label: "气态 (Gas)", icon: "☁️" };
+            if ([35, 80].includes(z)) return { label: "液态 (Liquid)", icon: "💧" };
+            if (z >= 104) return { label: "合成 (Synthetic)", icon: "❓" };
+            return { label: "固态 (Solid)", icon: "🧊" };
+        }
+
+        function calcShells(config) {
+            let shells = [0, 0, 0, 0, 0, 0, 0];
+            try {
+                const coreMap = { '[He]': [2], '[Ne]': [2, 8], '[Ar]': [2, 8, 8], '[Kr]': [2, 8, 18, 8], '[Xe]': [2, 8, 18, 18, 8], '[Rn]': [2, 8, 18, 32, 18, 8] };
+                let parts = config.split(' ');
+                if (coreMap[parts[0]]) {
+                    let core = coreMap[parts[0]];
+                    for (let i = 0; i < core.length; i++) shells[i] = core[i];
+                    parts.shift();
+                } else if (parts[0] === '1s¹') { shells[0] = 1; parts = []; }
+                else if (parts[0] === '1s²') { shells[0] = 2; parts = []; }
+
+                const supers = { '¹': 1, '²': 2, '³': 3, '⁴': 4, '⁵': 5, '⁶': 6, '⁷': 7, '⁸': 8, '⁹': 9, '⁰': 0, '¹⁰': 10, '¹¹': 11, '¹²': 12, '¹³': 13, '¹⁴': 14 };
+                parts.forEach(p => {
+                    if (!p) return;
+                    let n = parseInt(p[0]) - 1;
+                    let eStr = p.substring(2);
+                    let e = supers[eStr] || parseInt(eStr) || 0;
+                    if (e && n >= 0 && n < 7) shells[n] += e;
+                });
+            } catch (e) { }
+            return shells.filter(s => s > 0);
+        }
+
+        const elements = rawData.split('|').map(str => {
+            const p = str.split(',');
+            const z = parseInt(p[0]);
+            const cat = getCategory(z, parseInt(p[5]));
+            return {
+                z, sym: p[1], nameZh: p[2], nameEn: p[3], period: parseInt(p[4]), group: parseInt(p[5]),
+                block: p[6], mass: p[7], config: p[8], color: cat.color, rgb: cat.rgb, catName: cat.name,
+                phaseData: getPhase(z), shells: calcShells(p[8])
+            };
+        });
+
+        // --- 2. 蜂巢坐标系 ---
+        const RADIUS = 34;
+        const HEX_W = Math.sqrt(3) * RADIUS;
+        const HEX_H = 2 * RADIUS;
+        const SPACING_X = HEX_W;
+        const SPACING_Y = 1.5 * RADIUS;
+
+        const elCoords = {};
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+
+        elements.forEach(el => {
+            let col = el.group, row = el.period;
+            if (el.z >= 57 && el.z <= 71) { row = 9; col = el.z - 57 + 3; }
+            else if (el.z >= 89 && el.z <= 103) { row = 10; col = el.z - 89 + 3; }
+            let cx = col * SPACING_X + (row % 2 === 1 ? SPACING_X / 2 : 0);
+            let cy = row * SPACING_Y;
+
+            elCoords[el.z] = { x: cx, y: cy };
+            minX = Math.min(minX, cx); maxX = Math.max(maxX, cx);
+            minY = Math.min(minY, cy); maxY = Math.max(maxY, cy);
+        });
+
+        function getHexPoints(cx, cy, r) {
+            let pts = [];
+            for (let i = 0; i < 6; i++) {
+                let angle = (60 * i - 30) * Math.PI / 180;
+                pts.push(`${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`);
+            }
+            return pts.join(" ");
+        }
+
+        // --- 3. SVG 渲染 ---
+        const svgns = "http://www.w3.org/2000/svg";
+        const meshLayer = document.getElementById("mesh-layer");
+        const hexagonsLayer = document.getElementById("hexagons-layer");
+        const DOMNodes = {};
+
+        // 渲染极简网格连线
+        const MESH_THRESHOLD = HEX_W + 5;
+        for (let i = 0; i < elements.length; i++) {
+            for (let j = i + 1; j < elements.length; j++) {
+                const p1 = elCoords[elements[i].z], p2 = elCoords[elements[j].z];
+                if (Math.hypot(p1.x - p2.x, p1.y - p2.y) < MESH_THRESHOLD) {
+                    const line = document.createElementNS(svgns, "line");
+                    line.setAttribute("x1", p1.x); line.setAttribute("y1", p1.y);
+                    line.setAttribute("x2", p2.x); line.setAttribute("y2", p2.y);
+                    line.setAttribute("class", "mesh-line");
+                    meshLayer.appendChild(line);
+                }
+            }
+        }
+
+        // --- 3.5 渲染跨区量子连线 ---
+        const quantumLinksLayer = document.getElementById("quantum-links-layer");
+
+        // A. 同价态桥梁 (Valence Bridges)
+        const valenceBridges = [
+            { from: 6, to: 22 }, // C -> Ti
+            { from: 7, to: 23 }, // N -> V
+            { from: 8, to: 24 }, // O -> Cr
+            { from: 9, to: 25 }, // F -> Mn
+        ];
+
+        valenceBridges.forEach((link, idx) => {
+            const p1 = elCoords[link.from], p2 = elCoords[link.to];
+            const el1 = elements.find(e => e.z === link.from), el2 = elements.find(e => e.z === link.to);
+
+            // 使用三次贝塞尔曲线制造大跨度虫洞效果，控制点向上弯曲避免遮挡下方元素
+            // 引入 offset 错开堆叠的多组连线 (产生如彩虹桥般的 3D 层叠感)
+            const arcH = Math.max(Math.abs(p2.x - p1.x) * 0.4, 80) + (idx * 25);
+            const cx1 = p1.x;
+            const cy1 = p1.y - arcH; // 控制点1向上弯曲
+            const cx2 = p2.x;
+            const cy2 = p2.y - arcH; // 控制点2向上弯曲
+
+            const path = document.createElementNS(svgns, "path");
+            path.setAttribute("d", `M ${p1.x} ${p1.y} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${p2.x} ${p2.y}`);
+            path.setAttribute("class", "valence-bridge");
+            path.setAttribute("pointer-events", "none"); // 由 hitbox 接管
+            // 采用源节点颜色作为线颜色发光
+            path.style.stroke = el1.color;
+            path.style.color = el1.color; // 用于 drop-shadow currentColor 继承
+
+            // 宽大的隐形交互触发区 (Hitbox)
+            const hitbox = document.createElementNS(svgns, "path");
+            hitbox.setAttribute("d", path.getAttribute("d"));
+            hitbox.setAttribute("stroke", "transparent");
+            hitbox.setAttribute("stroke-width", "24");
+            hitbox.setAttribute("fill", "none");
+            hitbox.setAttribute("pointer-events", "stroke");
+            hitbox.style.cursor = "pointer";
+
+            // Tooltip 交互：扩充了具体的科学说明
+            const text = `${el1.sym} - ${el2.sym} 同价态桥梁: 它们分别位于主族与过渡金属，但在高维化学网络中拥有极为相似的最高正化合价，产生跨区共鸣。`;
+
+            const handleEnter = (e) => {
+                showLinkTooltip(e, text);
+                path.classList.add('hovered');
+            };
+            const handleLeave = () => {
+                hideLinkTooltip();
+                path.classList.remove('hovered');
+            };
+
+            hitbox.addEventListener('mouseenter', handleEnter);
+            hitbox.addEventListener('mousemove', moveLinkTooltip);
+            hitbox.addEventListener('mouseleave', handleLeave);
+
+            // 移动端 Touch 兼容
+            hitbox.addEventListener('touchstart', (e) => {
+                // 阻止默认滚动或缩放，如果不希望阻止，可以去除
+                // e.preventDefault(); 
+                handleEnter(e.touches[0]);
+                // 3秒后自动隐藏
+                setTimeout(handleLeave, 3000);
+            }, { passive: true });
+
+            quantumLinksLayer.appendChild(path);
+            quantumLinksLayer.appendChild(hitbox);
+        });
+
+        // B. 对角线法则 (Diagonal Rules)
+        const diagonalRules = [
+            { from: 3, to: 12 }, // Li -> Mg
+            { from: 4, to: 13 }, // Be -> Al
+            { from: 5, to: 14 }, // B -> Si
+        ];
+
+        diagonalRules.forEach((link, idx) => {
+            const p1 = elCoords[link.from], p2 = elCoords[link.to];
+            const el1 = elements.find(e => e.z === link.from), el2 = elements.find(e => e.z === link.to);
+            const path = document.createElementNS(svgns, "path");
+            // 微弱的贝塞尔曲线，稍微隆起的次级电场连线
+            const cx = (p1.x + p2.x) / 2;
+            // 引入错位防止遮挡
+            const cy = (p1.y + p2.y) / 2 - RADIUS * (1.2 + idx * 0.3);
+            path.setAttribute("d", `M ${p1.x} ${p1.y} Q ${cx} ${cy} ${p2.x} ${p2.y}`);
+            path.setAttribute("class", "diagonal-link");
+            path.setAttribute("stroke", "rgba(255,255,255,0.8)"); // 纯白透明突触
+            path.setAttribute("pointer-events", "none"); // 由 hitbox 接管
+
+            // 宽大的隐形交互触发区 (Hitbox)
+            const hitbox = document.createElementNS(svgns, "path");
+            hitbox.setAttribute("d", path.getAttribute("d"));
+            hitbox.setAttribute("stroke", "transparent");
+            hitbox.setAttribute("stroke-width", "24");
+            hitbox.setAttribute("fill", "none");
+            hitbox.setAttribute("pointer-events", "stroke");
+            hitbox.style.cursor = "pointer";
+
+            const text = `${el1.sym} - ${el2.sym} 对角线相似性: 由于半径衰减与核电荷递增相互抵消，它们拥有近乎相同的离子电势与活泼性。`;
+
+            const handleEnter = (e) => {
+                showLinkTooltip(e, text);
+                path.classList.add('hovered');
+            };
+            const handleLeave = () => {
+                hideLinkTooltip();
+                path.classList.remove('hovered');
+            };
+
+            hitbox.addEventListener('mouseenter', handleEnter);
+            hitbox.addEventListener('mousemove', moveLinkTooltip);
+            hitbox.addEventListener('mouseleave', handleLeave);
+
+            // 移动端 Touch 兼容
+            hitbox.addEventListener('touchstart', (e) => {
+                handleEnter(e.touches[0]);
+                setTimeout(handleLeave, 3000);
+            }, { passive: true });
+
+            quantumLinksLayer.appendChild(path);
+            quantumLinksLayer.appendChild(hitbox);
+        });
+
+        // Tooltip 核心逻辑
+        const linkTooltip = document.getElementById("link-tooltip");
+        function showLinkTooltip(e, text) {
+            linkTooltip.textContent = text;
+            linkTooltip.classList.add("show");
+            moveLinkTooltip(e);
+        }
+        function moveLinkTooltip(e) {
+            linkTooltip.style.left = e.clientX + 'px';
+            linkTooltip.style.top = e.clientY + 'px';
+        }
+        function hideLinkTooltip() {
+            linkTooltip.classList.remove("show");
+        }
+
+        // 渲染蜂巢节点 (左上角数字，中心符号，极其规整)
+        elements.forEach(el => {
+            const pos = elCoords[el.z];
+
+            const gPos = document.createElementNS(svgns, "g");
+            gPos.setAttribute("transform", `translate(${pos.x}, ${pos.y})`);
+
+            const gAnim = document.createElementNS(svgns, "g");
+            gAnim.setAttribute("class", "element-group");
+            gAnim.style.setProperty('--theme-color', el.color);
+            gAnim.style.setProperty('--theme-rgb', el.rgb);
+            DOMNodes[el.z] = gAnim;
+
+            const polygon = document.createElementNS(svgns, "polygon");
+            polygon.setAttribute("points", getHexPoints(0, 0, RADIUS - 1.5));
+            polygon.setAttribute("class", "element-hex");
+            polygon.setAttribute("stroke", "rgba(255,255,255,0.1)");
+            polygon.setAttribute("stroke-width", "1px");
+
+            const textSym = document.createElementNS(svgns, "text");
+            textSym.setAttribute("class", "element-sym");
+            textSym.setAttribute("x", 0); textSym.setAttribute("y", 2);
+            textSym.setAttribute("text-anchor", "middle"); textSym.setAttribute("dominant-baseline", "middle");
+            textSym.setAttribute("fill", el.color); textSym.setAttribute("font-size", "15px");
+            textSym.setAttribute("pointer-events", "none");
+            textSym.textContent = el.sym;
+
+            const textNum = document.createElementNS(svgns, "text");
+            textNum.setAttribute("class", "element-num");
+            textNum.setAttribute("x", -RADIUS / 2 + 3); textNum.setAttribute("y", -RADIUS / 2 + 5);
+            textNum.setAttribute("fill", el.color); textNum.setAttribute("font-size", "7px");
+            textNum.setAttribute("pointer-events", "none");
+            textNum.textContent = el.z;
+
+            gAnim.appendChild(polygon); gAnim.appendChild(textSym); gAnim.appendChild(textNum);
+            gPos.appendChild(gAnim);
+            hexagonsLayer.appendChild(gPos);
+
+            gAnim.addEventListener('pointerdown', (e) => { e.stopPropagation(); handleElementClick(el); });
+        });
+
+        // --- 4. 视口控制 ---
+        const viewport = document.getElementById("viewport");
+        const container = document.getElementById("svg-container");
+        let scale = 1, panX = 0, panY = 0, isDragging = false, startX, startY;
+        let initialPinchDist = 0, initialPinchScale = 1;
+
+        function updateTransform() { viewport.setAttribute("transform", `translate(${panX}, ${panY}) scale(${scale})`); }
+
+        function initCenter() {
+            const w = window.innerWidth, h = window.innerHeight;
+            const mapW = maxX - minX, mapH = maxY - minY;
+            const mapCenterX = minX + mapW / 2, mapCenterY = minY + mapH / 2;
+
+            if (w < 768) {
+                scale = (w * 0.95) / (mapW + HEX_W * 2);
+                panX = w / 2 - mapCenterX * scale;
+                panY = h * 0.35 - mapCenterY * scale;
+            } else {
+                scale = Math.min((w * 0.8) / mapW, (h * 0.8) / mapH);
+                if (scale > 1.2) scale = 1.2;
+                panX = w / 2 - mapCenterX * scale;
+                panY = h / 2 - mapCenterY * scale;
+            }
+            updateTransform();
+        }
+        requestAnimationFrame(initCenter);
+        window.addEventListener('resize', initCenter);
+
+        container.addEventListener('mousedown', e => {
+            isDragging = true; startX = e.clientX - panX; startY = e.clientY - panY; container.classList.add('grabbing');
+        });
+        window.addEventListener('mousemove', e => {
+            // 背景泛光随鼠标移动（利用 top 0, left 0 配合 transform 实现完美居中）
+            const glow = document.getElementById('ambient-glow');
+            if (glow) {
+                requestAnimationFrame(() => {
+                    glow.style.transform = `translate(calc(${e.clientX}px - 50%), calc(${e.clientY}px - 50%))`;
+                });
+            }
+            if (!isDragging || e.touches) return; panX = e.clientX - startX; panY = e.clientY - startY; updateTransform();
+        });
+        window.addEventListener('mouseup', () => { isDragging = false; container.classList.remove('grabbing'); });
+
+        container.addEventListener('touchstart', e => {
+            if (e.touches.length === 1) {
+                isDragging = true; startX = e.touches[0].clientX - panX; startY = e.touches[0].clientY - panY;
+            } else if (e.touches.length === 2) {
+                isDragging = false;
+                initialPinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                initialPinchScale = scale;
+            }
+        });
+        container.addEventListener('touchmove', e => {
+            e.preventDefault();
+            if (isDragging && e.touches.length === 1) {
+                panX = e.touches[0].clientX - startX; panY = e.touches[0].clientY - startY; updateTransform();
+            } else if (e.touches.length === 2) {
+                const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                scale = initialPinchScale * (dist / initialPinchDist); updateTransform();
+            }
+        }, { passive: false });
+        container.addEventListener('touchend', () => isDragging = false);
+
+        document.getElementById('btn-zoom-in').onclick = () => { scale *= 1.2; updateTransform(); };
+        document.getElementById('btn-zoom-out').onclick = () => { scale /= 1.2; updateTransform(); };
+        document.getElementById('btn-zoom-reset').onclick = initCenter;
+
+        // --- 5. UI 数据面板与静态波尔模型 ---
+        const infoPanel = document.getElementById('info-panel');
+        const staticBohr = document.getElementById('static-bohr-svg');
+
+        // 【严格静态：像工程图纸一样的波尔模型】
+        function renderStaticBohrModel(shells, color) {
+            staticBohr.innerHTML = `<circle cx="50" cy="50" r="4" fill="${color}" />`;
+            const maxRadius = 42;
+            const step = maxRadius / (shells.length || 1);
+
+            shells.forEach((electrons, idx) => {
+                const r = 10 + idx * step;
+                // 绘制虚线圈
+                staticBohr.innerHTML += `<circle cx="50" cy="50" r="${r}" class="bohr-ring" style="--theme-color:${color}"/>`;
+
+                // 静态绘制电子点位
+                for (let e = 0; e < Math.min(electrons, 32); e++) {
+                    const angle = (e / electrons) * Math.PI * 2;
+                    const ex = 50 + r * Math.cos(angle);
+                    const ey = 50 + r * Math.sin(angle);
+                    staticBohr.innerHTML += `<circle cx="${ex}" cy="${ey}" r="1.5" class="bohr-dot" style="--theme-color:${color}"/>`;
+                }
+            });
+        }
+
+        function handleElementClick(el) {
+            // 更新 CSS 变量驱动主题色
+            infoPanel.style.setProperty('--theme-color', el.color);
+            infoPanel.style.setProperty('--theme-rgb', el.rgb);
+            // 动态改变系统背景环境光为选中元素的微弱发光色
+            document.documentElement.style.setProperty('--glow-color', `rgba(${el.rgb}, 0.15)`);
+            document.getElementById('ambient-glow').style.width = '1200px';
+            document.getElementById('ambient-glow').style.height = '1200px';
+
+            // 更新面板外框和玻璃卡片的主题色反光
+            infoPanel.style.borderColor = `rgba(${el.rgb}, 0.3)`;
+
+            // 更新文本
+            document.getElementById('panel-num').textContent = el.z.toString().padStart(3, '0');
+            document.getElementById('panel-sym').textContent = el.sym;
+            document.getElementById('panel-name-zh').textContent = el.nameZh;
+            document.getElementById('panel-name-en').textContent = el.nameEn;
+            document.getElementById('panel-mass').textContent = el.mass;
+            document.getElementById('panel-phase').textContent = el.phaseData.label;
+            document.getElementById('panel-phase-icon').textContent = el.phaseData.icon;
+            document.getElementById('panel-config').textContent = el.config;
+            document.getElementById('panel-period').textContent = el.period;
+            document.getElementById('panel-group').textContent = el.group === 0 ? '-' : el.group;
+
+            // 扩展数据渲染
+            document.getElementById('panel-block').textContent = el.block ? el.block.toUpperCase() + ' 区' : '-';
+
+            const enValue = electronegativityData[el.sym];
+            const enTextEl = document.getElementById('panel-en-value');
+            const enBarEl = document.getElementById('panel-en-bar');
+            if (enValue !== undefined) {
+                enTextEl.textContent = enValue.toFixed(2);
+                // 鲍林标度最大值约 4.0 左右 (氟 F = 3.98)
+                const percentage = Math.min((enValue / 4.0) * 100, 100);
+                enBarEl.style.width = `${percentage}%`;
+                enBarEl.style.backgroundColor = el.color;
+            } else {
+                enTextEl.textContent = '未知';
+                enBarEl.style.width = '0%';
+            }
+
+            // 类别徽章
+            const badge = document.getElementById('panel-category-badge');
+            badge.textContent = el.catName;
+
+            // 渲染精美的壳层胶囊标签
+            const shellNames = ['K', 'L', 'M', 'N', 'O', 'P', 'Q'];
+            document.getElementById('panel-shells-text').innerHTML = el.shells.map((s, i) =>
+                `<div class="bg-[#111827] border border-white/10 rounded-md px-2 py-1 text-[9px] font-mono text-white/40 shadow-sm">
+                    ${shellNames[i]}: <span class="text-white/90">${s}</span>
+                </div>`
+            ).join('');
+
+            // 渲染静态工程图纸级模型
+            renderStaticBohrModel(el.shells, el.color);
+
+            infoPanel.classList.add('show');
+
+            document.querySelectorAll('.element-selected').forEach(n => n.classList.remove('element-selected'));
+            DOMNodes[el.z].classList.add('element-selected');
+
+            // 联动底层网格
+            document.querySelectorAll('.mesh-line-active').forEach(l => {
+                l.classList.remove('mesh-line-active');
+                l.style.stroke = "rgba(255,255,255,0.03)";
+            });
+
+            const p1 = elCoords[el.z];
+            document.querySelectorAll('.mesh-line').forEach(line => {
+                const x1 = parseFloat(line.getAttribute('x1')), y1 = parseFloat(line.getAttribute('y1'));
+                const x2 = parseFloat(line.getAttribute('x2')), y2 = parseFloat(line.getAttribute('y2'));
+                if ((Math.abs(x1 - p1.x) < 1 && Math.abs(y1 - p1.y) < 1) || (Math.abs(x2 - p1.x) < 1 && Math.abs(y2 - p1.y) < 1)) {
+                    line.classList.add('mesh-line-active');
+                    line.style.stroke = el.color;
+                }
+            });
+        }
+
+        document.getElementById('btn-close-info').addEventListener('click', () => {
+            infoPanel.classList.remove('show');
+            document.querySelectorAll('.element-selected').forEach(n => n.classList.remove('element-selected'));
+            document.querySelectorAll('.mesh-line-active').forEach(l => {
+                l.classList.remove('mesh-line-active');
+                l.style.stroke = "rgba(255,255,255,0.03)";
+            });
+            // 恢复环境光
+            document.documentElement.style.setProperty('--glow-color', 'rgba(255, 255, 255, 0.03)');
+            document.getElementById('ambient-glow').style.width = '800px';
+            document.getElementById('ambient-glow').style.height = '800px';
+            infoPanel.style.borderColor = 'var(--glass-border)';
+        });
+
+        // --- 6. 阅读指南抽屉逻辑 ---
+        const guideModal = document.getElementById('guide-modal');
+        const guideOverlay = document.getElementById('guide-overlay');
+        const btnOpenGuide = document.getElementById('btn-open-guide');
+        const btnCloseGuide = document.getElementById('btn-close-guide');
+
+        function openGuide() {
+            guideModal.classList.add('show');
+            guideOverlay.classList.add('show');
+        }
+        function closeGuide() {
+            guideModal.classList.remove('show');
+            guideOverlay.classList.remove('show');
+        }
+
+        btnOpenGuide.addEventListener('click', openGuide);
+        btnCloseGuide.addEventListener('click', closeGuide);
+        guideOverlay.addEventListener('click', closeGuide);
+
+        // --- 7. Intro Boot Logic ---
+        document.getElementById('btn-initiate').addEventListener('click', () => {
+            const intro = document.getElementById('intro-screen');
+            intro.classList.add('fade-out');
+
+            // 稍微微调一下背后主视图的出现动画 (可选)
+            document.getElementById('svg-container').style.opacity = '0';
+            document.getElementById('svg-container').style.transform = 'scale(0.98)';
+            document.getElementById('svg-container').style.transition = 'all 1s cubic-bezier(0.4, 0, 0.2, 1) 0.2s';
+
+            requestAnimationFrame(() => {
+                document.getElementById('svg-container').style.opacity = '1';
+                document.getElementById('svg-container').style.transform = 'scale(1)';
+            });
+
+            setTimeout(() => {
+                intro.remove(); // 释放 DOM
+            }, 1000);
+        });
+
+    </script>
+</body>
+
+</html>
