@@ -431,7 +431,7 @@
             <h1 class="text-3xl md:text-5xl font-bold tracking-[0.3em] text-white/90 mb-2">元素周期表</h1>
             <p class="text-xs md:text-sm text-cyan-500/80 tracking-[0.3em] font-mono uppercase mb-4">Creative Periodic
                 Table</p>
-            <p class="text-[10px] md:text-xs text-white/50 tracking-[0.2em] mb-12">作者：陈浩然 万雨佳 叶家诚 万志脖 雷依萱 许书琦</p>
+            <p class="text-[10px] md:text-xs text-white/50 tracking-[0.2em] mb-12">作者：陈浩然 万雨佳 叶家诚 万志脖 雷依萱 许书琦 唐云帆</p>
 
             <!-- 提示文案 -->
             <div
@@ -494,7 +494,7 @@
                 Creative Periodic Table</p>
         </div>
         <p class="text-[9px] md:text-[10px] text-white/50 tracking-[0.1em] mt-1.5 md:mt-2 drop-shadow-md">作者：陈浩然 万雨佳 叶家诚
-            万志脖 雷依萱 许书琦</p>
+            万志脖 雷依萱 许书琦 唐云帆</p>
     </div>
 
     <!-- 阅读指南按钮 -->
@@ -568,24 +568,28 @@
 
             <!-- 第一行：质量与物态 -->
             <div class="grid grid-cols-2 gap-4">
-                <div class="data-card p-4">
-                    <div class="text-[var(--text-muted)] text-[10px] mb-2">相对原子质量</div>
-                    <div id="panel-mass" class="text-white/90 font-mono text-base tracking-wide">51.996</div>
+                <div class="data-card p-4 flex flex-col justify-center">
+                    <div class="text-[var(--text-muted)] text-[10px] mb-2 uppercase tracking-wider font-semibold">相对原子质量
+                    </div>
+                    <div id="panel-mass" class="text-white/90 font-mono text-xl md:text-2xl tracking-wide">51.996</div>
                 </div>
-                <div class="data-card p-4">
-                    <div class="text-[var(--text-muted)] text-[10px] mb-2">常温物态</div>
+                <div class="data-card p-4 flex flex-col justify-center">
+                    <div class="text-[var(--text-muted)] text-[10px] mb-2 uppercase tracking-wider font-semibold">常温物态
+                    </div>
                     <div class="flex items-center gap-2">
-                        <span id="panel-phase-icon" class="text-sm opacity-80">🧊</span>
-                        <div id="panel-phase" class="text-white/90 text-sm tracking-wide">固态 (Solid)</div>
+                        <span id="panel-phase-icon" class="text-lg opacity-80">🧊</span>
+                        <div id="panel-phase" class="text-white/90 text-sm md:text-base tracking-wide font-medium">固态
+                            (Solid)</div>
                     </div>
                 </div>
             </div>
 
             <!-- 第二行：电子排布与静态图 -->
-            <div class="data-card p-4 flex items-stretch justify-between relative overflow-hidden">
+            <div class="data-card p-4 md:p-5 flex items-stretch justify-between relative overflow-hidden">
                 <div class="flex flex-col justify-center py-1 z-10">
-                    <div class="text-[var(--text-muted)] text-[10px] uppercase mb-3">电子排布 (ELECTRON CONFIG)</div>
-                    <div id="panel-config" class="font-mono text-lg tracking-wider mb-4"
+                    <div class="text-[var(--text-muted)] text-[10px] uppercase mb-3 tracking-wider font-semibold">电子排布
+                        (ELECTRON CONFIG)</div>
+                    <div id="panel-config" class="font-mono text-lg md:text-xl tracking-wider mb-4 font-medium"
                         style="color: var(--theme-color);">[Ar] 3d⁵ 4s¹</div>
                     <!-- 壳层胶囊 -->
                     <div class="flex flex-wrap gap-2" id="panel-shells-text">
@@ -594,68 +598,92 @@
                 </div>
 
                 <!-- 静态波尔模型 SVG (不转动，纯几何结构) -->
-                <div class="w-20 h-20 flex-shrink-0 flex items-center justify-center z-10 self-center">
-                    <svg viewBox="0 0 100 100" class="w-full h-full" id="static-bohr-svg">
+                <div
+                    class="w-20 h-20 md:w-24 md:h-24 flex-shrink-0 flex items-center justify-center z-10 self-center bg-black/20 rounded-full border border-white/5 p-2">
+                    <svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-lg" id="static-bohr-svg">
                         <circle cx="50" cy="50" r="4" fill="var(--theme-color)" />
                         <!-- JS 注入虚线圈和点 -->
                     </svg>
                 </div>
             </div>
 
-            <!-- 第三行：位置 -->
-            <div class="grid grid-cols-2 gap-4">
-                <div class="data-card p-4 flex items-center justify-between">
-                    <div class="text-[var(--text-muted)] text-[10px] uppercase">周期 PERIOD</div>
-                    <div id="panel-period" class="text-white/90 font-mono text-base">4</div>
+            <!-- 第三行：基本属性网格 (位置与分区) -->
+            <div class="grid grid-cols-3 gap-3">
+                <div class="data-card p-3 flex flex-col items-center justify-center text-center gap-1">
+                    <div class="text-[var(--text-muted)] text-[9px] uppercase tracking-wider">周期 Period</div>
+                    <div id="panel-period" class="text-white/90 font-mono text-lg font-medium">4</div>
                 </div>
-                <div class="data-card p-4 flex items-center justify-between">
-                    <div class="text-[var(--text-muted)] text-[10px] uppercase">族 GROUP</div>
-                    <div id="panel-group" class="text-white/90 font-mono text-base">6</div>
+                <div class="data-card p-3 flex flex-col items-center justify-center text-center gap-1">
+                    <div class="text-[var(--text-muted)] text-[9px] uppercase tracking-wider">族 Group</div>
+                    <div id="panel-group" class="text-white/90 font-mono text-lg font-medium">6</div>
                 </div>
+                <div class="data-card p-3 flex flex-col items-center justify-center text-center gap-1">
+                    <div class="text-[var(--text-muted)] text-[9px] uppercase tracking-wider">区 Block</div>
+                    <div id="panel-block" class="text-white/90 font-mono text-lg font-medium"
+                        style="color: var(--theme-color)">D 区</div>
+                </div>
+            </div>
 
-                <!-- 新增：区 (Block) -->
-                <div class="data-card p-4 flex items-center justify-between">
-                    <div class="text-[var(--text-muted)] text-[10px] uppercase">区 BLOCK</div>
-                    <div id="panel-block" class="text-white/90 font-mono text-base">D 区</div>
-                </div>
+            <!-- 第四行：物理化学属性综合面板 -->
+            <div class="data-card p-0 overflow-hidden flex flex-col">
 
-                <!-- 新增：鲍林电负性 -->
-                <div class="data-card p-4 flex flex-col justify-center gap-1">
-                    <div class="flex items-center justify-between mb-1">
-                        <div class="text-[var(--text-muted)] text-[10px] uppercase">电负性 (PAULING)</div>
-                        <div id="panel-en-value" class="text-white/90 font-mono text-base leading-none">1.66</div>
+                <!-- 电负性 -->
+                <div class="p-4 border-b border-white/5 bg-white/[0.01]">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-4 h-4 text-[var(--text-muted)]" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            <div class="text-[var(--text-muted)] text-[10px] uppercase font-semibold tracking-wider">电负性
+                                (PAULING)</div>
+                        </div>
+                        <div id="panel-en-value" class="text-white/90 font-mono text-lg leading-none font-medium">1.66
+                        </div>
                     </div>
                     <!-- 极客风进度条 -->
-                    <div class="w-full h-1 bg-white/10 rounded-full overflow-hidden relative">
+                    <div class="w-full h-1.5 bg-black/40 rounded-full overflow-hidden relative border border-white/5">
                         <div id="panel-en-bar"
-                            class="absolute top-0 left-0 h-full rounded-full transition-all duration-500 ease-out"
+                            class="absolute top-0 left-0 h-full rounded-full transition-all duration-700 ease-out shadow-[0_0_10px_rgba(var(--theme-rgb),0.5)]"
                             style="width: 40%; background-color: var(--theme-color);"></div>
                     </div>
+                </div>
 
-                    <!-- 新增：熔点 (Melting Point) -->
-                    <div class="data-card p-4 flex items-center justify-between">
-                        <div class="text-[var(--text-muted)] text-[10px] uppercase">熔点 (°C)</div>
-                        <div id="panel-melting" class="text-white/90 font-mono text-base">-</div>
+                <!-- 密度、熔点、沸点网格 -->
+                <div class="grid grid-cols-3 divide-x divide-white/5 bg-black/20">
+                    <div
+                        class="p-3 flex flex-col items-center text-center gap-1.5 hover:bg-white/[0.02] transition-colors">
+                        <div class="text-[var(--text-muted)] text-[9px] uppercase tracking-wider">密度 (g/cm³)</div>
+                        <div id="panel-density" class="text-white/80 font-mono text-sm">-</div>
                     </div>
-
-                    <!-- 新增：沸点 (Boiling Point) -->
-                    <div class="data-card p-4 flex items-center justify-between">
-                        <div class="text-[var(--text-muted)] text-[10px] uppercase">沸点 (°C)</div>
-                        <div id="panel-boiling" class="text-white/90 font-mono text-base">-</div>
+                    <div
+                        class="p-3 flex flex-col items-center text-center gap-1.5 hover:bg-white/[0.02] transition-colors">
+                        <div class="text-[var(--text-muted)] text-[9px] uppercase tracking-wider">熔点 (°C)</div>
+                        <div id="panel-melting" class="text-white/80 font-mono text-sm">-</div>
                     </div>
-
-                    <!-- 新增：密度 (Density) -->
-                    <div class="data-card p-4 flex items-center justify-between">
-                        <div class="text-[var(--text-muted)] text-[10px] uppercase">密度 (g/cm³)</div>
-                        <div id="panel-density" class="text-white/90 font-mono text-base">-</div>
-                    </div>
-
-                    <!-- 新增：元素简介 -->
-                    <div class="data-card p-4 flex flex-col gap-1">
-                        <div class="text-[var(--text-muted)] text-[10px] uppercase mb-1">元素简介</div>
-                        <div id="panel-description" class="text-white/70 text-[9px] leading-snug">-</div>
+                    <div
+                        class="p-3 flex flex-col items-center text-center gap-1.5 hover:bg-white/[0.02] transition-colors">
+                        <div class="text-[var(--text-muted)] text-[9px] uppercase tracking-wider">沸点 (°C)</div>
+                        <div id="panel-boiling" class="text-white/80 font-mono text-sm">-</div>
                     </div>
                 </div>
+            </div>
+
+            <!-- 第五行：元素简介 -->
+            <div class="data-card p-4 md:p-5 relative overflow-hidden group">
+                <div class="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none">
+                </div>
+                <div class="flex items-center gap-2 mb-2 relative z-10">
+                    <svg class="w-4 h-4 text-[var(--text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div class="text-[var(--text-muted)] text-[10px] uppercase font-semibold tracking-wider">元素简介</div>
+                </div>
+                <div id="panel-description"
+                    class="text-white/70 text-xs md:text-sm leading-relaxed relative z-10 font-light tracking-wide group-hover:text-white/80 transition-colors">
+                    -</div>
             </div>
 
         </div>
